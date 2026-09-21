@@ -17,6 +17,7 @@ public class Fahrrad {
         this.farbe = farbe;
         this.status = status;
         this.preisProStunde = preisProStunde;
+        // test als uebung - mein test
     }
 
     @Override
