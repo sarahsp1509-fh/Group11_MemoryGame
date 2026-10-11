@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Memory Tag & Nacht</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500&family=Hanken+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: eine Spalte, Tag = helle Papierfläche, Nacht = Vollflächen-Navy. Karten 3:4 im Raster. */
+:root{
+  --bg:#F4EFE6; --paper:#FBF8F2; --ink:#1C1C1C; --muted:#7A7468; --line:#E2DACB; --gold:#B8975A;
+  --p1:#C2553A; --p2:#3C5A8A; --btn:#1C1C1C; --btntext:#F4EFE6; --btn2:#E2DACB; --btn2text:#1C1C1C;
+  --cardback:#1C1C1C; --cardface:#FBF8F2; --cardink:#1C1C1C; --cardline:#E2DACB; --cardmuted:#7A7468;
+  --night:#10162B; --night2:#1C2546; --night3:#2A3560; --nightmuted:#9AA3BF; --cream:#F4EFE6; --win:#4CAF7A; --loss:#E0605A;
+  --display:'Bodoni Moda','Didot','Bodoni 72',Georgia,serif; --sans:'Hanken Grotesk','Helvetica Neue',Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#16140F; --paper:#221F18; --ink:#F1ECE0; --muted:#A39C8D; --line:#383327; --gold:#C9A869;
+  --btn:#F1ECE0; --btntext:#16140F; --btn2:#2E2A20; --btn2text:#F1ECE0; --cardback:#2B2820; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#16140F; --paper:#221F18; --ink:#F1ECE0; --muted:#A39C8D; --line:#383327; --gold:#C9A869;
+  --btn:#F1ECE0; --btntext:#16140F; --btn2:#2E2A20; --btn2text:#F1ECE0; --cardback:#2B2820; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.45;padding-inline:16px;padding-block:0}
+.screen{min-height:100dvh;max-width:1000px;margin:0 auto;display:flex;flex-direction:column;padding-block:20px 24px}
+.night{background:var(--night);color:var(--cream);margin-inline:-16px;padding-inline:16px;max-width:none}
+.night .in{width:100%;max-width:1000px;margin:0 auto;flex:1;display:flex;flex-direction:column}
+h1,h2,.serif{font-family:var(--display);font-weight:400;margin:0;text-wrap:balance}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.muted{color:var(--muted)} .night .muted{color:var(--nightmuted)}
+button{font-family:inherit;cursor:pointer}
+.btn{border:0;border-radius:14px;padding:12px 26px;font-size:14px;font-weight:700;background:var(--btn);color:var(--btntext);transition:filter .15s}
+.btn:hover{filter:brightness(1.15)} .btn.alt{background:var(--btn2);color:var(--btn2text)}
+.btn.gold{background:var(--gold);color:var(--night)} .btn.sm{padding:10px 18px}
+.btn:focus-visible,.card:focus-visible,.choice:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.center{margin:auto;text-align:center;width:100%}
+/* Start */
+.start h1{font-size:clamp(48px,12vw,84px);line-height:1;letter-spacing:.02em}
+.form{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:12px 16px;align-items:center;max-width:520px;margin:28px auto 0;text-align:left}
+.form label{font-size:14px}
+.form input[type=text],.form select,.form input[type=number]{width:100%;font:inherit;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink)}
+.form .chk{grid-column:1/-1;display:flex;gap:8px;align-items:center}
+.row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:30px}
+/* Tag */
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.top h2{font-size:clamp(24px,5vw,34px)}
+.tools{display:flex;gap:10px;align-items:center}
+.timer{font-family:var(--display);font-size:26px;color:var(--muted);font-variant-numeric:tabular-nums;min-width:70px;text-align:right}
+.badges{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-block:14px 10px}
+.badge{padding:10px 14px 12px;border-radius:14px;border-bottom:1px solid var(--line);min-width:0}
+.badge.on{background:var(--paper);border-bottom:3px solid var(--c)}
+.badge .n{font-family:var(--display);font-size:clamp(17px,4vw,22px);overflow-wrap:anywhere}
+.badge .s{font-size:13px;color:var(--muted)}
+.boardwrap{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;position:relative}
+.grid{display:grid;gap:12px;width:100%;margin:0 auto}
+.grid.c4{grid-template-columns:repeat(4,minmax(0,1fr));max-width:560px}
+.grid.c6{grid-template-columns:repeat(4,minmax(0,1fr));max-width:560px}
+@media(min-width:720px){.grid.c6{grid-template-columns:repeat(6,minmax(0,1fr));max-width:840px}}
+.card{all:unset;display:block;aspect-ratio:3/4;perspective:700px;cursor:pointer}
+.card .inner{position:relative;width:100%;height:100%;transition:transform .45s cubic-bezier(.3,.7,.3,1);transform-style:preserve-3d}
+.card.up .inner{transform:rotateY(180deg)}
+.card:not(.up):hover .inner{transform:translateY(-3px)}
+.face{position:absolute;inset:0;border-radius:12px;backface-visibility:hidden;-webkit-backface-visibility:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6%;box-shadow:0 3px 8px rgba(0,0,0,.12)}
+.face.back{background:var(--cardback);color:var(--gold)}
+.face.back::before{content:"";position:absolute;inset:6%;border:1px solid var(--gold);border-radius:8px}
+.face.back span{font-family:var(--display);font-size:clamp(22px,5vw,40px)}
+.face.front{background:var(--cardface);color:var(--cardmuted);transform:rotateY(180deg);border:1px solid var(--cardline)}
+.card.m0 .face.front{border:3px solid var(--p1)} .card.m1 .face.front{border:3px solid var(--p2)}
+.face .mot{width:56%;height:auto}
+.lbl{font-size:clamp(8px,1.6vw,11px);letter-spacing:.12em;text-transform:uppercase;font-weight:500}
+.msg{min-height:24px;margin-top:12px}
+.pause{display:none;width:100%;max-width:560px;aspect-ratio:4/3;background:var(--night);color:var(--cream);border-radius:18px;align-items:center;justify-content:center;flex-direction:column;gap:14px;text-align:center;padding:20px}
+.paused .grid{display:none}.paused .pause{display:flex}
+.pause h2{font-size:clamp(36px,9vw,56px)}
+/* Nacht */
+.night h2{font-size:clamp(30px,7vw,44px);overflow-wrap:anywhere}
+.choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:30px;max-width:780px;margin-inline:auto}
+@media(max-width:700px){.choices{grid-template-columns:1fr}}
+.choice{background:var(--night2);color:var(--cream);border:0;border-radius:16px;padding:22px 18px;text-align:center;transition:background .15s;display:flex;flex-direction:column;align-items:center;gap:10px}
+.choice:hover{background:var(--night3)}
+.choice b{font-size:16px}.choice small{color:var(--nightmuted);font-size:11px;margin-top:-8px}
+.pro{color:var(--win);font-size:12px}
+.warn{background:rgba(224,96,90,.14);border:1px solid var(--loss);border-radius:12px;padding:10px 14px;max-width:560px;margin:16px auto 0;font-size:14px;color:var(--cream)}
+.note{background:rgba(184,151,90,.14);border:1px solid var(--gold);border-radius:12px;padding:10px 14px;max-width:560px;margin:16px auto 0;font-size:14px;color:var(--cream)}.con{color:var(--loss);font-size:12px}
+.sides{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px;text-align:center}
+@media(max-width:620px){.sides{grid-template-columns:1fr}}
+.side{background:var(--night2);border-radius:18px;padding:16px;min-width:0}
+.side .nm{font-family:var(--display);font-size:22px;overflow-wrap:anywhere}
+.side .ch{color:var(--gold);font-weight:700;font-size:15px;display:flex;gap:10px;align-items:center;justify-content:center;margin-top:6px}
+.figs{display:flex;gap:26px;justify-content:center;align-items:flex-end;margin-top:6px}
+.fig{display:flex;flex-direction:column;align-items:center}
+.fig b{font-family:var(--display);font-weight:400;font-size:52px;line-height:1.1;font-variant-numeric:tabular-nums}
+.fig small{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--nightmuted)}
+.side .net{font-family:var(--display);font-size:56px;line-height:1.1;font-variant-numeric:tabular-nums}
+.thumbs{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;min-height:76px;align-items:center;margin-block:4px}
+.th{position:relative;width:48px;height:64px;border-radius:7px;background:var(--cardface);border:2px solid var(--c);display:flex;align-items:center;justify-content:center}
+.th .mot{width:60%}
+.th i{position:absolute;top:-6px;right:-6px;width:16px;height:16px;border-radius:50%;background:var(--c);color:#fff;font:700 13px/16px var(--sans);text-align:center;font-style:normal}
+.menuwrap{position:relative}
+.menu{position:absolute;right:0;top:100%;margin-top:6px;background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:6px;z-index:5;min-width:200px;box-shadow:0 8px 24px rgba(0,0,0,.2)}
+.menu button{all:unset;display:block;width:100%;box-sizing:border-box;padding:10px 12px;border-radius:8px;cursor:pointer;font-size:14px}
+.menu button:hover,.menu button:focus-visible{background:var(--line)}
+.modal{position:fixed;inset:0;background:rgba(10,12,24,.6);display:flex;align-items:center;justify-content:center;padding:16px;z-index:20}
+.modal div{background:var(--paper);color:var(--ink);padding:24px;border-radius:16px;max-width:380px;text-align:center}
+.fade{position:fixed;inset:0;background:var(--night);opacity:0;pointer-events:none;z-index:30}
+table{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums}
+th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line)}th{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.tw{overflow-x:auto;max-width:640px;margin:22px auto 0}
+@media(prefers-reduced-motion:reduce){.card .inner{transition:none}}
+</style>
+<style>html{color-scheme:light dark}body{margin:0}[hidden]{display:none!important}</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="fade" id="fade"></div>
+<script>
+(function(){
+const MOTIFS=[
+ {k:'circle',label:'Kreis',color:'#C2553A'},{k:'square',label:'Quadrat',color:'#7A8450'},
+ {k:'triangle',label:'Dreieck',color:'#243B5E'},{k:'diamond',label:'Raute',color:'#D9A441'},
+ {k:'hexagon',label:'Sechseck',color:'#2F5D50'},{k:'cross',label:'Kreuz',color:'#A0522D'},
+ {k:'star',label:'Stern',color:'#B8975A'},{k:'moon',label:'Mond',color:'#5B7FB5'},
+ {k:'ring',label:'Ring',color:'#6A3E5A'},{k:'heart',label:'Herz',color:'#D98C8C'},
+ {k:'arch',label:'Bogen',color:'#9CAF88'},{k:'drop',label:'Tropfen',color:'#2B2B2B'}];
+MOTIFS.forEach((m,i)=>m.id=i);
+const DIFFS=[{name:'Leicht',pairs:6},{name:'Mittel',pairs:8},{name:'Schwer',pairs:12}];
+const STEAL=2, MAXNAME=18;
+const ACTIONS={
+ DEFEND:{label:'Auf Nummer sicher',sub:null,pro:'Deine Paare sind geschützt.',cons:['Du gewinnst nichts dazu.']},
+ HOUSE:{label:'1 Paar erhalten',sub:null,pro:'Du erhältst 1 Paar.',cons:['Gegner stiehlt: du verlierst '+STEAL+' Paare.']},
+ STEAL:{label:STEAL+' Paare vom Gegner stehlen',sub:null,pro:'Du nimmst dem Gegner '+STEAL+' Paare (hat er weniger, alle die er hat).',cons:['Gegner sichert sich ab: du bekommst nichts.','Gegner stiehlt auch: du verlierst '+STEAL+' Paare.']}};
+const $=s=>document.querySelector(s), app=$('#app');
+const rnd=n=>Math.floor(Math.random()*n);
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]]}return a};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt=s=>String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+const signed=n=>n>0?'+'+n:n<0?'−'+(-n):'±0';
+
+function shape(m){
+ const c=m.color;
+ switch(m.k){
+  case 'circle':return `<circle cx="50" cy="50" r="32" fill="${c}"/>`;
+  case 'square':return `<rect x="24" y="24" width="52" height="52" fill="${c}"/>`;
+  case 'triangle':return `<polygon points="50,16 82,72 18,72" fill="${c}"/>`;
+  case 'diamond':return `<polygon points="50,14 86,50 50,86 14,50" fill="${c}"/>`;
+  case 'hexagon':return `<polygon points="82,50 66,78 34,78 18,50 34,22 66,22" fill="${c}"/>`;
+  case 'cross':return `<path d="M40 18h20v22h22v20H60v22H40V60H18V40h22z" fill="${c}"/>`;
+  case 'star':{let p=[];for(let i=0;i<10;i++){const r=i%2?15:36,a=-Math.PI/2+i*Math.PI/5;p.push((50+r*Math.cos(a)).toFixed(1)+','+(52+r*Math.sin(a)).toFixed(1))}return `<polygon points="${p.join(' ')}" fill="${c}"/>`}
+  case 'moon':return `<path d="M49.3 16.2A34 34 0 1 0 76.5 65.1A28 28 0 0 1 49.3 16.2Z" fill="${c}"/>`;
+  case 'ring':return `<circle cx="50" cy="50" r="24" fill="none" stroke="${c}" stroke-width="15"/>`;
+  case 'heart':return `<path d="M50 84C8 56 20 18 50 38C80 18 92 56 50 84Z" fill="${c}"/>`;
+  case 'arch':return `<path d="M24 82V48A26 26 0 0 1 76 48V82Z" fill="${c}"/>`;
+  default:return `<path d="M50 14C58 34 76 46 76 62A26 26 0 0 1 24 62C24 46 42 34 50 14Z" fill="${c}"/>`;
+ }
+}
+const svg=m=>`<svg class="mot" viewBox="0 0 100 100" aria-hidden="true">${shape(m)}</svg>`;
+function icon(a,size,color,cut){
+ let b='';
+ if(a==='DEFEND')b=`<path d="M50 6C62 16 78 20 90 20V48C90 72 70 88 50 96C30 88 10 72 10 48V20C22 20 38 16 50 6Z" fill="${color}"/><polyline points="32,50 46,64 70,36" fill="none" stroke="${cut}" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>`;
+ else if(a==='HOUSE')b=`<rect x="12" y="18" width="46" height="62" rx="7" fill="${color}" transform="rotate(-14 35 49)" opacity=".7"/><rect x="40" y="22" width="46" height="62" rx="7" fill="${color}" stroke="${cut}" stroke-width="5" transform="rotate(10 63 53)"/><polygon points="63,40 72,53 63,66 54,53" fill="${cut}" transform="rotate(10 63 53)"/>`;
+ else b=`<rect x="26" y="46" width="50" height="40" rx="16" fill="${color}"/><rect x="26" y="16" width="11" height="44" rx="5.5" fill="${color}"/><rect x="39" y="8" width="11" height="50" rx="5.5" fill="${color}"/><rect x="52" y="10" width="11" height="48" rx="5.5" fill="${color}"/><rect x="65" y="20" width="11" height="40" rx="5.5" fill="${color}"/><rect x="36" y="82" width="28" height="14" rx="6" fill="${color}"/><rect x="24" y="40" width="12" height="34" rx="6" fill="${color}" transform="rotate(-40 30 72)"/>`;
+ return `<svg width="${size}" height="${size}" viewBox="0 0 100 100" aria-hidden="true">${b}</svg>`;
+}
+
+/* ---------- Zustand ---------- */
+const settings={n1:'Spieler 1',n2:'Spieler 2',bot:true,diff:1,rpd:3};
+let G=null, token=0, paused=false, queue=[], clock=null, transitioning=false, scene='start';
+function newGame(){
+ const bot=settings.bot;
+ let n1=(settings.n1.trim()||'Spieler 1').slice(0,MAXNAME), n2=bot?'Computer':((settings.n2.trim()||'Spieler 2').slice(0,MAXNAME));
+ if(n1.toLowerCase()===n2.toLowerCase())n2=n2.slice(0,MAXNAME-4)+' (2)';
+ G={players:[{name:n1,bot:false,pairs:[],attempts:0,secs:0},{name:n2,bot,pairs:[],attempts:0,secs:0}],
+  diff:DIFFS[settings.diff],diffIdx:settings.diff,rpd:settings.rpd,cycle:1,round:1,current:0,totalRounds:0,
+  tiles:[],first:-1,busy:false,dayActive:false,elapsed:0,mem:new Map(),choices:[null,null]};
+}
+function later(ms,fn){const t=token;setTimeout(()=>{if(t!==token)return;if(paused)queue.push([t,fn]);else fn()},ms)}
+function stopAll(){token++;queue=[];paused=false;transitioning=false;clearInterval(clock);clock=null;const f=$('#fade');f.style.opacity=0;f.style.transition='none'}
+
+/* ---------- Start ---------- */
+function showStart(focusLevel){
+ stopAll();scene='start';G=null;
+ app.innerHTML=`<div class="screen start"><div class="center">
+  <h1 class="serif">MEMORY</h1><div class="eyebrow" style="margin-top:6px">Tag &amp; Nacht</div>
+  <p class="muted" style="margin:18px auto 4px;max-width:480px">Finde Paare bei Tag. Verteidige, sammle oder stiehl sie bei Nacht.</p>
+  <p class="muted" style="margin:0 auto;max-width:480px;font-size:13px">Wer die meisten Paare hat, gewinnt. Bei Gleichstand ist es unentschieden. Stehlen: immer ${STEAL} zufällige Paare des Gegners. Ab Nacht 2 verlierst du sofort, wenn du nach einer Nacht 0 Paare hast. Das Spiel läuft, bis ein Spieler keine Paare mehr hat oder du es im Menü beendest.</p>
+  <div class="form">
+   <label for="n1">Name Spieler 1</label><input id="n1" type="text" maxlength="${MAXNAME}" value="${esc(settings.n1)}">
+   <label for="n2">Name Spieler 2</label><input id="n2" type="text" maxlength="${MAXNAME}" value="${esc(settings.bot?'Computer':settings.n2)}" ${settings.bot?'disabled':''}>
+   <label class="chk"><input id="bot" type="checkbox" ${settings.bot?'checked':''}> Gegen den Computer spielen</label>
+   <p class="chk muted" style="font-size:12px;margin:-6px 0 0">Haken entfernen, wenn ihr zu zweit an einem Gerät spielt.</p>
+   <label for="diff">Schwierigkeit</label><select id="diff">${DIFFS.map((d,i)=>`<option value="${i}" ${i===settings.diff?'selected':''}>${d.name} (${d.pairs} Paare)</option>`).join('')}</select>
+   <label for="rpd">Memory-Runden pro Tag</label><input id="rpd" type="number" min="1" max="5" value="${settings.rpd}">
+  </div>
+  <div class="row"><button class="btn" id="go">Spiel starten</button><button class="btn alt" id="hs">Highscores</button></div>
+  <p class="muted" style="font-size:12px;margin-top:22px">Ergebnisse werden in diesem Browser gespeichert.</p>
+ </div></div>`;
+ const read=()=>{settings.n1=$('#n1').value;if(!settings.bot)settings.n2=$('#n2').value;
+  settings.diff=+$('#diff').value;settings.rpd=Math.max(1,Math.min(5,+$('#rpd').value||3));};
+ $('#bot').onchange=e=>{read();settings.bot=e.target.checked;const f=$('#n2');if(settings.bot){f.value='Computer';f.disabled=true}else{f.value=settings.n2;f.disabled=false}};
+ $('#go').onclick=()=>{read();newGame();startRound()};
+ $('#hs').onclick=()=>{read();showHighscores()};
+ if(focusLevel)$('#diff').focus();
+}
+
+/* ---------- Tag ---------- */
+function startRound(){
+ clearInterval(clock);
+ const ids=shuffle(MOTIFS.map(m=>m.id)).slice(0,Math.min(G.diff.pairs,MOTIFS.length));
+ const tiles=[];ids.forEach(id=>{tiles.push({m:MOTIFS[id],up:false,matched:false,owner:-1});tiles.push({m:MOTIFS[id],up:false,matched:false,owner:-1})});
+ G.tiles=shuffle(tiles);G.first=-1;G.busy=false;G.dayActive=true;G.mem.clear();
+ G.current=G.totalRounds%2;G.totalRounds++;
+ scene='day';
+ const cols=G.tiles.length>16?'c6':'c4';
+ app.innerHTML=`<div class="screen" id="day"><div class="top">
+   <div><div class="eyebrow" id="cyc"></div><h2 id="phase"></h2></div>
+   <div class="tools"><span class="timer" id="timer">${fmt(G.elapsed)}</span><button class="btn sm" id="pbtn" title="Pause / Weiter (Taste P)">Pause</button>${menuBtn(false)}</div></div>
+  <div class="badges"><div class="badge" id="b0" style="--c:var(--p1)"></div><div class="badge" id="b1" style="--c:var(--p2)"></div></div>
+  <div class="boardwrap" id="board"><div class="grid ${cols}" id="grid">${G.tiles.map((t,i)=>`<button class="card" data-i="${i}" aria-label="Karte ${i+1}"><div class="inner"><div class="face back"><span>M</span></div><div class="face front">${svg(t.m)}<span class="lbl">${t.m.label}</span></div></div></button>`).join('')}</div>
+   <div class="pause"><h2>Pausiert</h2><p style="color:var(--nightmuted);margin:0">Drücke „P“ oder „Weiter“ zum Fortfahren</p><button class="btn gold" id="presume">Weiter</button></div></div>
+  <div class="msg" id="msg"></div></div>`;
+ $('#phase').textContent='Tag '+G.cycle+'  ·  Runde '+G.round+' / '+G.rpd;
+ $('#cyc').textContent='Zyklus '+G.cycle+'  ·  '+G.diff.name.toUpperCase();
+ $('#grid').onclick=e=>{const c=e.target.closest('.card');if(c)onClick(+c.dataset.i)};
+ $('#pbtn').onclick=togglePause;$('#presume').onclick=togglePause;wireMenu();
+ setMsg(G.players[G.current].name+' beginnt.');badges();
+ clock=setInterval(()=>{if(paused||!G.dayActive)return;G.elapsed++;G.players[G.current].secs++;badges();const t=$('#timer');if(t)t.textContent=fmt(G.elapsed)},1000);
+ maybeBot();
+}
+function setMsg(s){const m=$('#msg');if(m)m.textContent=s}
+function badges(){G.players.forEach((p,i)=>{const b=$('#b'+i);if(!b)return;const on=i===G.current&&G.dayActive;b.classList.toggle('on',on);
+ b.innerHTML=`<div class="n">${esc(p.name)}${p.bot?'  ·  KI':''}${on?'   ◂ am Zug':''}</div><div class="s">Paare ${p.pairs.length}   ·   Versuche ${p.attempts}   ·   Zeit ${fmt(p.secs)}</div>`})}
+function paintCards(){G.tiles.forEach((t,i)=>{const c=document.querySelector('.card[data-i="'+i+'"]');if(!c)return;
+ c.classList.toggle('up',t.up||t.matched);c.classList.toggle('m0',t.matched&&t.owner===0);c.classList.toggle('m1',t.matched&&t.owner===1)})}
+function onClick(i){if(paused||!G.dayActive||G.busy||G.players[G.current].bot)return;reveal(i)}
+function reveal(i){
+ const t=G.tiles[i];if(!t||t.up||t.matched||i===G.first)return;   // ungültiger Index: nichts tun statt abstürzen
+ t.up=true;paintCards();
+ if(Math.random()<.75)G.mem.set(i,t.m.id);
+ if(G.first<0){G.first=i;return}
+ const a=G.first,b=i;G.first=-1;const p=G.players[G.current];p.attempts++;
+ const ta=G.tiles[a],tb=G.tiles[b];
+ if(ta.m.id===tb.m.id){
+  ta.matched=tb.matched=true;ta.owner=tb.owner=G.current;p.pairs.push(ta.m);G.mem.delete(a);G.mem.delete(b);paintCards();
+  setMsg('Paar gefunden: '+ta.m.label+'  –  '+p.name+' ist nochmal dran.');badges();
+  if(G.tiles.every(x=>x.matched))endRound();else maybeBot();
+ }else{
+  G.busy=true;setMsg('Kein Paar.');
+  later(900,()=>{ta.up=tb.up=false;paintCards();G.busy=false;G.current=1-G.current;setMsg(G.players[G.current].name+' ist dran.');badges();maybeBot()});
+ }
+}
+function endRound(){
+ G.dayActive=false;badges();setMsg('Runde beendet.');
+ later(1300,()=>{if(G.round<G.rpd){G.round++;startRound()}else startNight()});
+}
+/* Computer-Gegner */
+function maybeBot(){if(!G.dayActive||!G.players[G.current].bot)return;later(750,botStep)}
+function botStep(){
+ if(paused||!G.dayActive||G.busy||!G.players[G.current].bot)return;
+ if(G.first<0){let a=knownPair();if(a<0)a=randHidden(-1);reveal(a);if(G.dayActive)later(650,botStep)}
+ else{const pid=G.tiles[G.first].m.id;let b=-1;
+  G.mem.forEach((v,k)=>{if(k!==G.first&&v===pid&&!G.tiles[k].matched)b=k});
+  if(b<0)b=randHidden(G.first);reveal(b)}
+}
+function knownPair(){const seen=new Map();for(const [k,v] of G.mem){if(G.tiles[k].matched)continue;if(seen.has(v))return seen.get(v);seen.set(v,k)}return -1}
+function randHidden(ex){const hidden=[],unk=[];G.tiles.forEach((t,i)=>{if(t.matched||t.up||i===ex)return;hidden.push(i);if(!G.mem.has(i))unk.push(i)});const pool=unk.length?unk:hidden;return pool[rnd(pool.length)]}
+
+/* Pause */
+function togglePause(){paused?resume():pause()}
+function pause(){if(paused||transitioning||scene!=='day')return;paused=true;const b=$('#board');if(b)b.classList.add('paused');const p=$('#pbtn');if(p)p.textContent='Weiter'}
+function resume(){if(!paused)return;paused=false;const b=$('#board');if(b)b.classList.remove('paused');const p=$('#pbtn');if(p)p.textContent='Pause';
+ const q=queue;queue=[];q.forEach(([t,fn])=>{if(t===token)fn()})}
+document.addEventListener('keyup',e=>{if((e.key==='p'||e.key==='P')&&scene==='day'&&!/INPUT|SELECT|TEXTAREA/.test(e.target.tagName))togglePause()});
+
+/* Menü */
+function menuBtn(night){return `<div class="menuwrap"><button class="btn sm ${night?'':'alt'}" style="${night?'background:var(--night2);color:var(--cream)':''}" id="mbtn" aria-haspopup="true">Menü</button></div>`}
+function wireMenu(){
+ const b=$('#mbtn');if(!b)return;
+ b.onclick=e=>{e.stopPropagation();const w=b.parentElement;const ex=w.querySelector('.menu');if(ex){ex.remove();return}
+  const m=document.createElement('div');m.className='menu';
+  m.innerHTML=`<button data-t="Home">Home</button><button data-t="Spiel abbrechen">Spiel abbrechen (ohne Wertung)</button><button data-t="lvl">Anderes Level wählen</button><button data-t="end">Spiel beenden &amp; werten</button>`;
+  m.onclick=ev=>{const t=ev.target.closest('button');if(!t)return;m.remove();confirmAbort(t.dataset.t==='lvl'?'lvl':t.dataset.t==='end'?'end':'abort')};w.appendChild(m)};
+}
+document.addEventListener('click',()=>{document.querySelectorAll('.menu').forEach(m=>m.remove())});
+function confirmAbort(mode){
+ const was=paused;pause();
+ const d=document.createElement('div');d.className='modal';
+ d.innerHTML=`<div role="dialog" aria-modal="true"><h2 class="serif" style="font-size:26px">${mode==='end'?'Spiel beenden?':'Spiel abbrechen?'}</h2><p class="muted">${mode==='end'?'Der aktuelle Stand wird gewertet, angezeigt und in den Highscores gespeichert.':'Der aktuelle Spielstand geht verloren und kommt nicht in die Highscores.'}</p><div class="row" style="margin-top:18px"><button class="btn" id="yes">Ja</button><button class="btn alt" id="no">Nein</button></div></div>`;
+ document.body.appendChild(d);$('#no').focus();
+ $('#no').onclick=()=>{d.remove();if(!was)resume()};
+ $('#yes').onclick=()=>{d.remove();if(mode==='end')endGame('Spiel im Menü beendet');else showStart(mode==='lvl')};
+}
+
+/* ---------- Nacht ---------- */
+function startNight(){
+ G.choices=[null,null];transitioning=true;const t=token,f=$('#fade');
+ f.style.transition='opacity 1.7s ease-in-out';f.style.pointerEvents='auto';f.style.opacity=1;
+ setTimeout(()=>{if(t!==token)return;askNight(0);f.style.transition='opacity .6s ease-in-out';f.style.opacity=0;
+  setTimeout(()=>{if(t!==token)return;transitioning=false;f.style.pointerEvents='none'},650)},1750);
+}
+function nightShell(inner){
+ scene='night';
+ app.innerHTML=`<div class="screen night"><div class="in"><div style="display:flex;justify-content:flex-end">${menuBtn(true)}</div>${inner}</div></div>`;wireMenu();
+}
+function warnFor(p){
+ if(G.cycle<2)return '';
+ const n=p.pairs.length;
+ if(n===0)return '<div class="warn"><b>Achtung:</b> Du hast 0 Paare. Stehst du nach dieser Nacht noch bei 0 Paaren, hast du verloren.</div>';
+ if(n<=STEAL)return '<div class="warn"><b>Achtung:</b> Du hast nur noch '+(n===1?'1 Paar':n+' Paare')+'. Ein Diebstahl kann dich auf 0 Paare bringen, dann hast du verloren.</div>';
+ return '';
+}
+function askNight(who){
+ const p=G.players[who];
+ if(p.bot){G.choices[who]=botChoice(who);afterChoice(who);return}
+ const other=G.players[1-who];
+ nightShell(`<div class="center">
+  <div class="eyebrow">Nacht ${G.cycle}</div>
+  <h2 style="margin-top:6px">${esc(p.name)}, du wählst geheim.</h2>
+  <p class="muted" style="margin:8px 0 0">${other.bot?'Deine Wahl bleibt verborgen.':esc(other.name)+', bitte jetzt wegschauen.'}</p>
+  <p style="margin:12px 0 0">Deine Paare: ${p.pairs.length}</p>${warnFor(p)}
+  <div class="choices">${Object.entries(ACTIONS).map(([k,a])=>`<button class="choice" data-a="${k}">${icon(k,52,'var(--gold)','var(--night2)')}<b>${a.label}</b>${a.sub?`<small>${a.sub}</small>`:''}<span class="pro"><b>Vorteil:</b> ${a.pro}</span><span class="con"><b>Risiko:</b> ${a.cons.join('<br>')}</span></button>`).join('')}</div></div>`);
+ document.querySelector('.choices').onclick=e=>{const c=e.target.closest('.choice');if(!c)return;confirmChoice(who,c.dataset.a)};
+}
+function confirmChoice(who,k){
+ const p=G.players[who],a=ACTIONS[k];
+ nightShell(`<div class="center">
+  <div class="eyebrow">Nacht ${G.cycle}</div>
+  <h2 style="margin-top:6px">${esc(p.name)}, bist du sicher?</h2>
+  <div class="side" style="max-width:380px;margin:22px auto 0"><div style="display:flex;justify-content:center">${icon(k,64,'var(--gold)','var(--night2)')}</div>
+   <div class="nm" style="margin-top:8px">${a.label}</div>
+   <p class="pro" style="margin:10px 0 0"><b>Vorteil:</b> ${a.pro}</p><p class="con" style="margin:6px 0 0"><b>Risiko:</b> ${a.cons.join('<br>')}</p></div>${warnFor(p)}
+  <p class="muted" style="margin:16px 0 0">Nach der Bestätigung kannst du nicht mehr ändern.</p>
+  <div class="row"><button class="btn gold" id="ok" style="padding:14px 40px">Ja, bestätigen</button><button class="btn alt" id="back">Abbrechen und neu wählen</button></div></div>`);
+ $('#ok').onclick=()=>{G.choices[who]=k;afterChoice(who)};
+ $('#back').onclick=()=>askNight(who);
+}
+function afterChoice(who){
+ if(who===0){
+  if(G.players[1].bot){askNight(1);return}
+  nightShell(`<div class="center"><div class="eyebrow">Nacht ${G.cycle}</div><h2 style="margin-top:6px">Wahl gespeichert.</h2>
+   <p class="muted">Gerät jetzt an ${esc(G.players[1].name)} übergeben.</p>
+   <div class="row"><button class="btn gold" id="ready">${esc(G.players[1].name)} ist bereit</button></div></div>`);
+  $('#ready').onclick=()=>askNight(1);
+ }else resolveNight();
+}
+function botChoice(who){
+ const me=G.players[who],o=G.players[1-who],r=Math.random();
+ if(!me.pairs.length)return r<.5?'HOUSE':'STEAL';                       // nichts zu verlieren
+ if(G.cycle>=2&&me.pairs.length<=STEAL)return r<.7?'DEFEND':'HOUSE';    // ein Diebstahl würde ihn ausscheiden lassen
+ if(me.pairs.length>o.pairs.length+2)return r<.6?'DEFEND':'HOUSE';
+ return r<.34?'DEFEND':r<.67?'HOUSE':'STEAL';
+}
+/* ---------- Nacht-Regel (reine Funktion, ohne Oberfläche: so ist sie testbar) ----------
+   Reihenfolge, bewusst in dieser Form:
+   1) Gratis-Paare gutschreiben.
+   2) Diebstahl auf dem Stand NACH Schritt 1 berechnen - beide Diebe sehen denselben Stand,
+      ein frisch erhaltenes Paar kann also mitgestohlen werden.
+   3) Erst dann entfernen, danach gutschreiben. Sonst würde der zweite Dieb
+      einen schon geleerten Stapel sehen.
+   Entfernt wird über POSITIONEN, nicht über das Motiv: ein Spieler kann dasselbe Motiv
+   mehrfach besitzen, und dann würde die Suche nach dem Motiv die falsche Karte treffen. */
+function pickIndices(len,n){                 // n zufällige Positionen, absteigend sortiert
+ const all=[];for(let k=0;k<len;k++)all.push(k);
+ return shuffle(all).slice(0,n).sort((a,b)=>b-a);
+}
+function grantPair(p){                       // bevorzugt ein Motiv, das der Spieler noch nicht hat
+ const have=new Set(p.pairs.map(m=>m.id)),fresh=MOTIFS.filter(m=>!have.has(m.id));
+ const pool=fresh.length?fresh:MOTIFS,g=pool[rnd(pool.length)];
+ p.pairs.push(g);return g;
+}
+function settleNight(P,ch){
+ const before=P.map(p=>p.pairs.length);
+ const house=[null,null],stolen=[[],[]],blocked=[false,false],empty=[false,false],take=[[],[]];
+ for(let i=0;i<2;i++)if(ch[i]==='HOUSE')house[i]=grantPair(P[i]);
+ for(let i=0;i<2;i++){
+  if(ch[i]!=='STEAL')continue;
+  const v=1-i;
+  if(ch[v]==='DEFEND'){blocked[i]=true;continue}        // Gegner hat sich abgesichert
+  take[i]=pickIndices(P[v].pairs.length,STEAL);
+  stolen[i]=take[i].map(k=>P[v].pairs[k]);
+  if(!stolen[i].length)empty[i]=true;                   // beim Gegner war nichts zu holen
+ }
+ for(let i=0;i<2;i++)take[i].forEach(k=>P[1-i].pairs.splice(k,1));   // absteigend -> Indizes bleiben gültig
+ for(let i=0;i<2;i++)P[i].pairs.push(...stolen[i]);
+ const net=P.map((p,i)=>p.pairs.length-before[i]);
+ return {before,net,house,stolen,blocked,empty};
+}
+function resolveNight(){
+ const P=G.players,r=settleNight(P,G.choices);
+ const e0=!P[0].pairs.length,e1=!P[1].pairs.length;
+ r.reason=null;
+ if(G.cycle>=2){if(e0&&e1)r.reason='Beide Spieler haben keine Paare mehr';else if(e0)r.reason=P[0].name+' hat keine Paare mehr';else if(e1)r.reason=P[1].name+' hat keine Paare mehr'}
+ showResolution(r);
+}
+function headline(r){
+ const P=G.players,s0=r.stolen[0].length>0,s1=r.stolen[1].length>0;
+ if(s0&&s1)return 'Beide haben gestohlen!';
+ if(s0||s1)return esc(P[s0?0:1].name)+' hat gestohlen!';
+ if(r.blocked[0]||r.blocked[1])return 'Verteidigung erfolgreich!';
+ if(r.empty[0]||r.empty[1])return 'Nichts zu holen!';
+ const h0=!!r.house[0],h1=!!r.house[1];
+ if(h0&&h1)return 'Beide erhalten 1 Paar!';
+ if(h0||h1)return esc(P[h0?0:1].name)+' erhält 1 Paar';
+ return 'Ruhige Nacht';
+}
+const thumb=(m,c,plus)=>`<div class="th" style="--c:${c}" title="${m.label}">${svg(m)}<i>${plus?'+':'−'}</i></div>`;
+function showResolution(r){
+ const P=G.players,over=!!r.reason;
+ const side=i=>{
+  const lost=r.stolen[1-i],gained=[];if(r.house[i])gained.push(r.house[i]);gained.push(...r.stolen[i]);
+  const col=r.net[i]>0?'var(--win)':r.net[i]<0?'var(--loss)':'var(--nightmuted)';
+  const gTxt=G.choices[i]==='HOUSE'?'erhalten':'gestohlen';
+  const figs=(gained.length||lost.length)?(gained.length?`<span class="fig" style="color:var(--win)"><b>+${gained.length}</b><small>${gTxt}</small></span>`:'')+(lost.length?`<span class="fig" style="color:var(--loss)"><b>−${lost.length}</b><small>verloren</small></span>`:''):`<span class="fig" style="color:var(--nightmuted)"><b>±0</b></span>`;
+  return `<div class="side"><div class="nm">${esc(P[i].name)}</div>
+   <div class="ch">${icon(G.choices[i],36,'var(--gold)','var(--night2)')}${ACTIONS[G.choices[i]].label}</div>
+   <div class="figs">${figs}</div>
+   <div class="thumbs">${gained.map(m=>thumb(m,'var(--win)',true)).join('')}${lost.map(m=>thumb(m,'var(--loss)',false)).join('')}${!lost.length&&!gained.length?'<span class="muted" style="font-size:13px">Keine Paare bewegt</span>':''}</div>
+   <div class="muted" style="font-size:13px">${r.before[i]}  →  ${r.before[i]+r.net[i]} Paare  ·  <b style="color:${col}">${signed(r.net[i])} gesamt</b></div></div>`};
+ let win;
+ if(r.net[0]===r.net[1])win=r.net[0]===0?'Ruhige Nacht':'Gleichstand in dieser Nacht  ('+signed(r.net[0])+' für beide)';
+ else{const w=r.net[0]>r.net[1]?0:1;win='Gewinner der Nacht: '+esc(P[w].name)+'  ('+signed(r.net[w])+(Math.abs(r.net[w])===1?' Paar)':' Paare)')}
+ nightShell(`<div class="center" style="margin-block:auto">
+  <div class="eyebrow">Auflösung  ·  Nacht ${G.cycle}</div>
+  <h2 style="margin-top:6px">${headline(r)}</h2>
+  <div class="sides">${side(0)}${side(1)}</div>
+  <p style="margin:16px 0 0;font-weight:700;color:var(--gold)">${win}</p>${G.cycle===1?'<div class="note"><b>Ab jetzt gilt:</b> Wer nach einer Nacht 0 Paare hat, verliert sofort. Hast du nur noch '+STEAL+' Paare oder weniger, wirst du in der nächsten Nacht gewarnt.</div>':''}
+  <div class="row"><button class="btn gold" id="next" style="font-size:17px;padding:16px 56px">${over?'Zum Endergebnis':'Es wird Tag'}</button></div></div>`);
+ $('#next').onclick=()=>{if(over)endGame(r.reason);else{G.cycle++;G.round=1;startRound()}};
+}
+
+/* ---------- Ende & Highscores ---------- */
+let memHS=[],storeOk=null;
+function storeCheck(){                      // einmal prüfen, ob der Browser dauerhaft speichern darf
+ if(storeOk!==null)return storeOk;
+ try{localStorage.setItem('memory-probe','1');localStorage.removeItem('memory-probe');storeOk=true}
+ catch(e){storeOk=false}
+ return storeOk;
+}
+function loadHS(){
+ if(!storeCheck())return memHS;
+ try{const v=JSON.parse(localStorage.getItem('memory-hs')||'[]');return Array.isArray(v)?v:[]}catch(e){storeOk=false;return memHS}
+}
+function saveHS(rows){
+ const keep=rows.slice(-200);
+ memHS=keep;
+ if(!storeCheck())return false;
+ try{localStorage.setItem('memory-hs',JSON.stringify(keep));return true}catch(e){storeOk=false;return false}
+}
+function endGame(reason){
+ stopAll();scene='end';const P=G.players,a=P[0],b=P[1];
+ const rows=loadHS(),d=new Date(),date=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+ const human=P.filter(p=>!p.bot);                       // der Computer kommt nicht in die Bestenliste
+ human.forEach(p=>rows.push({n:p.name,p:p.pairs.length,t:p.secs,a:p.attempts,d:date,s:G.diffIdx}));const saved=saveHS(rows)&&human.length>0;
+ let head;
+ if(a.pairs.length!==b.pairs.length)head=esc(a.pairs.length>b.pairs.length?a.name:b.name)+' gewinnt.';
+  else head='Unentschieden.';
+ app.innerHTML=`<div class="screen"><div class="center"><div class="eyebrow">Spielende</div><h1 class="serif" style="font-size:clamp(34px,8vw,52px);margin-top:6px">${head}</h1>
+  <p style="font-weight:700;margin:8px 0 0">${esc(reason)}</p>
+  <div class="tw"><table><thead><tr><th>Spieler</th><th>Paare</th><th>Versuche</th><th>Zeit</th></tr></thead><tbody>${P.map(p=>`<tr><td>${esc(p.name)}</td><td>${p.pairs.length}</td><td>${p.attempts}</td><td>${fmt(p.secs)}</td></tr>`).join('')}</tbody></table></div>
+  <p class="muted" style="font-size:13px;margin-top:18px">${saved?'Ergebnis in den Highscores gespeichert.':'Dieser Browser speichert nichts dauerhaft – das Ergebnis gilt nur, solange die Seite offen bleibt.'}</p>
+  <div class="row"><button class="btn" id="again">Neues Spiel</button><button class="btn alt" id="hs">Highscores</button><button class="btn alt" id="home">Home</button></div></div></div>`;
+ $('#again').onclick=()=>showStart();$('#home').onclick=()=>showStart();$('#hs').onclick=()=>showHighscores();
+}
+function showHighscores(level){
+ stopAll();scene='hs';
+ const lvl=(typeof level==='number')?level:(G&&G.diffIdx!=null?G.diffIdx:settings.diff);
+ const all=loadHS();
+ const rows=all.filter(r=>r.s===lvl).sort((x,y)=>y.p-x.p||x.t-y.t||x.a-y.a).slice(0,10);
+ const legacy=all.filter(r=>r.s===undefined).length;
+ app.innerHTML=`<div class="screen"><div class="center"><div class="eyebrow">Bestenliste</div><h1 class="serif" style="font-size:clamp(36px,9vw,48px);margin-top:6px">Highscores</h1>
+  <div class="row" style="margin-top:20px">${DIFFS.map((d,i)=>`<button class="btn sm ${i===lvl?'':'alt'}" data-l="${i}" aria-pressed="${i===lvl}">${d.name}</button>`).join('')}</div>
+  ${rows.length?`<div class="tw"><table><thead><tr><th>#</th><th>Spieler</th><th>Paare</th><th>Zeit</th><th>Versuche</th><th>Datum</th></tr></thead><tbody>${rows.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(r.n)}</td><td>${r.p}</td><td>${fmt(r.t)}</td><td>${r.a}</td><td>${r.d}</td></tr>`).join('')}</tbody></table></div>`:`<p class="muted" style="margin-top:24px">Noch keine Ergebnisse für „${DIFFS[lvl].name}“.</p>`}
+  <p class="muted" style="font-size:12px;margin-top:16px">Zeit = eigene Spielzeit des Spielers, solange er am Zug war. Gespeichert wird ein Ergebnis erst, wenn ein Spiel zu Ende gespielt oder im Menü gewertet wird.${legacy?` ${legacy} ältere Ergebnisse aus einer früheren Version werden nicht angezeigt.`:''}</p>
+  ${storeCheck()?'':'<div class="warn" style="color:var(--ink);border-color:var(--loss);background:rgba(224,96,90,.12)"><b>Dieser Browser speichert nichts dauerhaft.</b> Die Liste ist leer, sobald du die Seite schließt. Häufigste Gründe: privates Fenster oder blockierte Website-Daten.</div>'}
+  <div class="row"><button class="btn" id="home">Home</button></div></div></div>`;
+ app.querySelectorAll('[data-l]').forEach(b=>b.onclick=()=>showHighscores(+b.dataset.l));
+ $('#home').onclick=()=>showStart();
+}
+showStart();
+window.__memtest={get G(){return G},showHighscores,loadHS,storeCheck,settleNight,MOTIFS,STEAL};
+})();
+</script>
+</body>
+</html>
